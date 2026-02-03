@@ -1,22 +1,27 @@
-import nltk
-nltk.download('punkt')
-import textstat
 from bs4 import BeautifulSoup
+import re
 
 def analyze_readability(text):
-    flesch = textstat.flesch_reading_ease(text)
-    grade = textstat.text_standard(text)
+    sentences = re.split(r'[.!?]', text)
+    words = re.findall(r'\w+', text)
 
-    if flesch >= 60:
+    num_sentences = max(1, len(sentences))
+    num_words = max(1, len(words))
+    avg_words_per_sentence = num_words / num_sentences
+
+    if avg_words_per_sentence < 15:
         level = "Easy to read"
-    elif flesch >= 40:
+        score = 65
+    elif avg_words_per_sentence < 25:
         level = "Moderate"
+        score = 45
     else:
         level = "Difficult"
+        score = 25
 
     return {
-        "flesch_score": round(flesch, 2),
-        "grade_level": grade,
+        "flesch_score": score,
+        "grade_level": "Approximate",
         "level": level
     }
 
@@ -40,7 +45,6 @@ def calculate_usability_score(readability, accessibility_issues):
     score = 0
     suggestions = []
 
-    # Readability
     if readability["level"] == "Easy to read":
         score += 30
     elif readability["level"] == "Moderate":
@@ -50,7 +54,6 @@ def calculate_usability_score(readability, accessibility_issues):
         score += 10
         suggestions.append("👉 Use shorter sentences and simpler words.")
 
-    # Accessibility
     if not accessibility_issues:
         score += 30
     else:
@@ -59,7 +62,5 @@ def calculate_usability_score(readability, accessibility_issues):
             "👉 Fix accessibility issues like missing alt text and heading structure."
         )
 
-    # Structure + mobile baseline
     score += 40
-
     return score, suggestions
